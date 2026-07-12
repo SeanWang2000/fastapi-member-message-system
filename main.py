@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
-from pwdlib import PasswordHash
+from password_utils import hash_password
 
 load_dotenv()
 
@@ -22,8 +22,6 @@ class RegisterData(BaseModel):
     account: str
     nickname: str
     password: str
-
-password_hash = PasswordHash.recommended()
 
 def validate_text(
     value: str,
@@ -156,7 +154,7 @@ def register(body: RegisterData):
             "message": "暱稱已被使用"
         }
 
-    hashed_password = password_hash.hash(password)
+    hashed_password = hash_password(password)
     db = None
     cursor = None
 
