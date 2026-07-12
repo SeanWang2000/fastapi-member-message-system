@@ -4,7 +4,7 @@ import mysql.connector
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from password_utils import hash_password
 
 load_dotenv()

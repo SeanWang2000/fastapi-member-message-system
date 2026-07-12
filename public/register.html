@@ -28,24 +28,9 @@
             <p id="message" class="message register-message" aria-live="polite"></p>
         </form>
 
-        <p class="switch">已經有帳號？ <a href="/">返回登入</a></p>
+        <p class="switch">已經有帳號？<a href="/">返回登入</a></p>
     </main>
 
-    <script>
-        document.querySelector('#register-form').addEventListener('submit', function (event) {
-            event.preventDefault();
-            const password = document.querySelector('#password');
-            const confirmation = document.querySelector('#password-confirm');
-            const message = document.querySelector('#message');
-
-            message.classList.remove('error');
-            if (password.value !== confirmation.value) {
-                message.textContent = '兩次輸入的密碼不一致。';
-                message.classList.add('error');
-                return;
-            }
-            message.textContent = '目前為前端展示頁面，註冊功能尚未啟用。';
-        });
-    </script>
+    <script src="/main.js"></script>
 </body>
 </html>
