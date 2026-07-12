@@ -9,33 +9,14 @@ from pwdlib import PasswordHash
 
 load_dotenv()
 
-con = mysql.connector.connect(
-    user=os.getenv("DB_USER"),
-    password=os.getenv("DB_PASSWORD"),
-    host=os.getenv("DB_HOST"),
-    database=os.getenv("DB_NAME")
-)
-print("Database Ready")
-
-
-def ensure_db_connection():
-    """Ensure the shared MySQL connection is alive before using it."""
-    try:
-        if not con.is_connected():
-            con.reconnect(attempts=3, delay=2)
-        else:
-            # Also detects connections that are technically open but have
-            # been dropped by MySQL or the network while idle.
-            con.ping(reconnect=True, attempts=3, delay=2)
-    except mysql.connector.Error:
-        # A failed ping can leave the connection unusable; try a fresh
-        # reconnect before allowing the request to fail.
-        con.reconnect(attempts=3, delay=2)
-
-    if not con.is_connected():
-        raise mysql.connector.Error("Unable to establish a MySQL connection")
-
-    return con
+# 目前為學習與小型專案，採用每次操作建立並關閉連線的方式。
+def get_db_connection():
+    return mysql.connector.connect(
+        user=os.getenv("DB_USER"),
+        password=os.getenv("DB_PASSWORD"),
+        host=os.getenv("DB_HOST"),
+        database=os.getenv("DB_NAME")
+    )
 
 class RegisterData(BaseModel):
     account: str
@@ -62,29 +43,41 @@ def validate_text(
 app = FastAPI()
 
 def account_is_available(account: str) -> bool:
-    db = ensure_db_connection()
-    cursor = db.cursor()
+    db = None
+    cursor = None
+
     try:
+        db = get_db_connection()
+        cursor = db.cursor()
         cursor.execute(
             "SELECT 1 FROM users WHERE account = %s LIMIT 1",
             (account,)
         )
         return cursor.fetchone() is None
     finally:
-        cursor.close()
+        if cursor is not None:
+            cursor.close()
+        if db is not None:
+            db.close()
 
 
 def nickname_is_available(nickname: str) -> bool:
-    db = ensure_db_connection()
-    cursor = db.cursor()
+    db = None
+    cursor = None
+
     try:
+        db = get_db_connection()
+        cursor = db.cursor()
         cursor.execute(
             "SELECT 1 FROM users WHERE nick_name = %s LIMIT 1",
             (nickname,)
         )
         return cursor.fetchone() is None
     finally:
-        cursor.close()
+        if cursor is not None:
+            cursor.close()
+        if db is not None:
+            db.close()
 
 @app.get("/api/accounts/check")
 def check_account(account: str):
@@ -164,10 +157,12 @@ def register(body: RegisterData):
         }
 
     hashed_password = password_hash.hash(password)
-    db = ensure_db_connection()
-    cursor = db.cursor()
+    db = None
+    cursor = None
 
     try:
+        db = get_db_connection()
+        cursor = db.cursor()
         cursor.execute(
             """
             INSERT INTO users (account, nick_name, password_hash)
@@ -184,7 +179,8 @@ def register(body: RegisterData):
         }
 
     except mysql.connector.IntegrityError:
-        db.rollback()
+        if db is not None:
+            db.rollback()
 
         return {
             "success": False,
@@ -192,7 +188,9 @@ def register(body: RegisterData):
         }
 
     except mysql.connector.Error as error:
-        db.rollback()
+        if db is not None:
+            db.rollback()
+
         print(error)
 
         return {
@@ -201,7 +199,10 @@ def register(body: RegisterData):
         }
 
     finally:
-        cursor.close()
+        if cursor is not None:
+            cursor.close()
+        if db is not None:
+            db.close()
 
 
 
@@ -213,14 +214,19 @@ def register(body: RegisterData):
 
 @app.get("/api/message")
 def get_msg():
-    db = ensure_db_connection()
-    cursor = db.cursor(dictionary=True)
+    db = None
+    cursor = None
 
     try:
+        db = get_db_connection()
+        cursor = db.cursor(dictionary=True)
         cursor.execute("SELECT * FROM message")
         return cursor.fetchall()
     finally:
-        cursor.close()
+        if cursor is not None:
+            cursor.close()
+        if db is not None:
+            db.close()
 
 
 app.mount("/", StaticFiles(directory="public", html=True))
