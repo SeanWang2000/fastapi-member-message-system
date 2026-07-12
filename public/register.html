@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>會員註冊</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <main class="card">
+        <h1>建立帳號</h1>
+        <p class="subtitle">填寫以下資料完成註冊</p>
+
+        <form id="register-form" autocomplete="off">
+            <label for="username">帳號</label>
+            <input id="username" name="username" type="text" required>
+
+            <label for="nickname">暱稱</label>
+            <input id="nickname" name="nickname" type="text" required>
+
+            <label for="password">密碼</label>
+            <input id="password" name="password" type="password" minlength="6" required>
+
+            <label for="password-confirm">確認密碼</label>
+            <input id="password-confirm" name="password_confirm" type="password" minlength="6" required>
+
+            <button class="register-button" type="submit">註冊</button>
+            <p id="message" class="message register-message" aria-live="polite"></p>
+        </form>
+
+        <p class="switch">已經有帳號？ <a href="/">返回登入</a></p>
+    </main>
+
+    <script>
+        document.querySelector('#register-form').addEventListener('submit', function (event) {
+            event.preventDefault();
+            const password = document.querySelector('#password');
+            const confirmation = document.querySelector('#password-confirm');
+            const message = document.querySelector('#message');
+
+            message.classList.remove('error');
+            if (password.value !== confirmation.value) {
+                message.textContent = '兩次輸入的密碼不一致。';
+                message.classList.add('error');
+                return;
+            }
+            message.textContent = '目前為前端展示頁面，註冊功能尚未啟用。';
+        });
+    </script>
+</body>
+</html>

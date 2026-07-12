@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>會員登入</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <main class="card">
+        <h1>會員登入</h1>
+        <p class="subtitle">歡迎回來，請輸入您的帳號</p>
+
+        <form id="login-form" autocomplete="off">
+            <label for="username">帳號</label>
+            <input id="username" name="username" type="text" required>
+
+            <label for="password">密碼</label>
+            <input id="password" name="password" type="password" required>
+
+            <button class="login-button" type="submit">登入</button>
+            <p id="message" class="message" aria-live="polite"></p>
+        </form>
+
+        <p class="switch">還沒有帳號？ <a href="/register.html">前往註冊</a></p>
+    </main>
+
+    <script>
+        document.querySelector('#login-form').addEventListener('submit', function (event) {
+            event.preventDefault();
+            document.querySelector('#message').textContent = '目前為前端展示頁面，登入功能尚未啟用。';
+        });
+    </script>
+</body>
+</html>
