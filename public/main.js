@@ -159,6 +159,51 @@ async function loadMessages() {
     }
 }
 
+async function publishMessage() {
+    const content = document.querySelector('#content');
+    const button = document.querySelector('#publish-button');
+    const message = document.querySelector('#publish-message');
+    const value = content.value.trim();
+
+    message.classList.remove('error');
+
+    if (!value) {
+        message.textContent = '請輸入留言內容';
+        message.classList.add('error');
+        return;
+    }
+
+    button.disabled = true;
+    message.textContent = '';
+
+    try {
+        const response = await fetch('/api/message', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                content: value
+            })
+        });
+
+        const result = await response.json();
+        message.textContent = result.message;
+
+        if (result.success) {
+            content.value = '';
+            await loadMessages();
+        } else {
+            message.classList.add('error');
+        }
+    } catch (error) {
+        message.textContent = '留言發布失敗，請稍後再試。';
+        message.classList.add('error');
+    } finally {
+        button.disabled = false;
+    }
+}
+
 async function setupSessionButton() {
     const button = document.querySelector('#logout-button');
 
@@ -204,3 +249,7 @@ document
 
 setupSessionButton();
 loadMessages();
+
+document
+    .querySelector('#publish-button')
+    ?.addEventListener('click', publishMessage);

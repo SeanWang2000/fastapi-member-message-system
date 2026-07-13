@@ -113,6 +113,13 @@ textarea:focus { outline: 2px solid #93c5fd; border-color: #2563eb; }
     background: #2563eb;
     font-size: 14px;
 }
+.composer-message {
+    min-height: 20px;
+    margin: 10px 0 0;
+    color: #16a34a;
+    font-size: 14px;
+}
+.composer-message.error { color: #dc2626; }
 .message-board { margin-top: 30px; }
 .section-heading {
     display: flex;

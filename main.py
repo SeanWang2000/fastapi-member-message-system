@@ -28,6 +28,9 @@ class LoginData(BaseModel):
     account: str
     password: str
 
+class MessageData(BaseModel):
+    content: str
+
 def validate_text(
     value: str,
     field_name: str,
@@ -293,5 +296,62 @@ def get_msg():
         if db is not None:
             db.close()
 
+@app.post("/api/message")
+def post_msg(request: Request, body: MessageData):
+    user_id = request.session.get("user_id")
+
+    if user_id is None:
+        return {
+            "success": False,
+            "message": "請先登入"
+        }
+
+    content = body.content.strip()
+
+    if not content:
+        return {
+            "success": False,
+            "message": "留言內容不可為空白"
+        }
+
+    if len(content) > 500:
+        return {
+            "success": False,
+            "message": "留言內容不可超過 500 個字元"
+        }
+
+    db = None
+    cursor = None
+
+    try:
+        db = get_db_connection()
+        cursor = db.cursor()
+
+        cursor.execute("""
+            INSERT INTO message (user_id, content)
+            VALUES (%s, %s)
+        """, (user_id, content))
+
+        db.commit()
+
+        return {
+            "success": True,
+            "message": "留言發布成功"
+        }
+
+    except mysql.connector.Error:
+        if db is not None:
+            db.rollback()
+
+        return {
+            "success": False,
+            "message": "留言發布失敗"
+        }
+
+    finally:
+        if cursor is not None:
+            cursor.close()
+        if db is not None:
+            db.close()
 
 app.mount("/", StaticFiles(directory="public", html=True))
