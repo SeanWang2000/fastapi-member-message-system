@@ -102,6 +102,21 @@ def find_user_by_account(account: str):
         cursor.close()
         con.close()
 
+@app.get("/api/session")
+def get_session(request: Request):
+    return {
+        "logged_in": "user_id" in request.session,
+        "nickname": request.session.get("nickname")
+    }
+
+@app.post("/api/logout")
+def logout(request: Request):
+    request.session.clear()
+    return {
+        "success": True,
+        "message": "已登出"
+    }
+
 @app.get("/api/accounts/check")
 def check_account(account: str):
     error = validate_text(account, "帳號", 6, 20)

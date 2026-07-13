@@ -73,9 +73,44 @@ async function login(event) {
     message.textContent = result.message;
 
     if (result.success) {
-        window.location.href = '/';
+        window.location.href = '/message.html';
     } else {
         message.classList.add('error');
+    }
+}
+
+async function setupSessionButton() {
+    const button = document.querySelector('#logout-button');
+
+    if (!button) {
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/session');
+        const session = await response.json();
+
+        button.textContent = session.logged_in ? '登出' : '登入';
+
+        button.addEventListener('click', async () => {
+            if (!session.logged_in) {
+                window.location.href = '/';
+                return;
+            }
+
+            const logoutResponse = await fetch('/api/logout', {
+                method: 'POST'
+            });
+
+            if (logoutResponse.ok) {
+                window.location.reload();
+            }
+        });
+    } catch (error) {
+        button.textContent = '登入';
+        button.addEventListener('click', () => {
+            window.location.href = '/';
+        });
     }
 }
 
@@ -87,4 +122,4 @@ document
     .querySelector('#login-form')
     ?.addEventListener('submit', login);
 
-
+setupSessionButton();
