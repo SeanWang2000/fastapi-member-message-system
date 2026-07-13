@@ -1,16 +1,56 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>留言系統</title>
+    <title>留言板</title>
+    <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-    <h2>留言系統</h2>
-    內容 <input type="text", id="content"><br/>
-    <button onclick="postMessage();">送出</button>
-    <hr/>
-    <div id="board"></div>
+    <main class="message-page">
+        <header class="message-header">
+            <div>
+                <p class="eyebrow">MEMBER BOARD</p>
+                <h1>留言板</h1>
+                <p class="subtitle">分享你的想法，和其他會員交流。</p>
+            </div>
+            <button class="logout-button" id="logout-button" type="button">登出</button>
+        </header>
+
+        <section class="message-composer" aria-labelledby="composer-title">
+            <h2 id="composer-title">留下留言</h2>
+            <textarea id="content" name="content" rows="4" placeholder="輸入你想分享的內容……"></textarea>
+            <button class="message-button" type="button">發布留言</button>
+        </section>
+
+        <section class="message-board" aria-labelledby="board-title">
+            <div class="section-heading">
+                <h2 id="board-title">最新留言</h2>
+                <span class="message-count">2 則留言</span>
+            </div>
+            <div id="board" class="message-list">
+                <article class="message-item">
+                    <div class="message-body">
+                        <div class="message-meta">
+                            <span class="message-author">小明</span>
+                            <time datetime="2026-07-13T10:30">今天 10:30</time>
+                        </div>
+                    <p class="message-content">今天第一次使用留言板，介面看起來很清楚！</p>
+                    </div>
+                </article>
+                <article class="message-item">
+                    <div class="message-body">
+                        <div class="message-meta">
+                            <span class="message-author">小美</span>
+                            <time datetime="2026-07-13T09:15">今天 09:15</time>
+                        </div>
+                        <p class="message-content">期待之後可以和大家一起交流。</p>
+                    </div>
+                </article>
+            </div>
+        </section>
+    </main>
+
     <script src="/main.js"></script>
 </body>
 </html>
