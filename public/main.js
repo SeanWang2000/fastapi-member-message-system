@@ -99,6 +99,31 @@ function formatMessageTime(value) {
     });
 }
 
+async function deleteMessage(messageId, item) {
+    if (!window.confirm('確定要刪除這則留言嗎？')) {
+        return;
+    }
+
+    const button = item.querySelector('.delete-message-button');
+    button.disabled = true;
+
+    try {
+        const response = await fetch(`/api/message/${messageId}`, {
+            method: 'DELETE'
+        });
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+            throw new Error(result.message || '留言刪除失敗');
+        }
+
+        await loadMessages();
+    } catch (error) {
+        window.alert(error.message || '留言刪除失敗，請稍後再試。');
+        button.disabled = false;
+    }
+}
+
 async function loadMessages() {
     const board = document.querySelector('#board');
     const count = document.querySelector('.message-count');
@@ -147,6 +172,16 @@ async function loadMessages() {
             content.textContent = message.content;
 
             meta.append(author, time);
+            if (message.can_delete) {
+                const deleteButton = document.createElement('button');
+                deleteButton.className = 'delete-message-button';
+                deleteButton.type = 'button';
+                deleteButton.textContent = '刪除';
+                deleteButton.addEventListener('click', () => {
+                    deleteMessage(message.id, item);
+                });
+                meta.appendChild(deleteButton);
+            }
             item.append(meta, content);
             board.appendChild(item);
         });

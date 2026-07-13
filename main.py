@@ -271,9 +271,10 @@ def login(request: Request, data: LoginData):
     }
 
 @app.get("/api/message")
-def get_msg():
+def get_msg(request: Request):
     db = None
     cursor = None
+    user_id = request.session.get("user_id")
 
     try:
         db = get_db_connection()
@@ -281,15 +282,62 @@ def get_msg():
 
         cursor.execute("""
             SELECT
+                m.id,
                 u.nick_name,
                 m.content,
-                m.create_time
+                m.create_time,
+                (m.user_id = %s) AS can_delete
             FROM message AS m
             JOIN users AS u ON m.user_id = u.id
             ORDER BY m.create_time DESC
-        """)
-
+        """, (user_id,))
         return cursor.fetchall()
+    finally:
+        if cursor is not None:
+            cursor.close()
+        if db is not None:
+            db.close()
+
+@app.delete("/api/message/{message_id}")
+def delete_msg(request: Request, message_id: int):
+    user_id = request.session.get("user_id")
+
+    if user_id is None:
+        return {
+            "success": False,
+            "message": "請先登入"
+        }
+
+    db = None
+    cursor = None
+
+    try:
+        db = get_db_connection()
+        cursor = db.cursor()
+        cursor.execute(
+            "DELETE FROM message WHERE id = %s AND user_id = %s",
+            (message_id, user_id)
+        )
+
+        if cursor.rowcount == 0:
+            return {
+                "success": False,
+                "message": "留言不存在或無權限刪除"
+            }
+
+        db.commit()
+        return {
+            "success": True,
+            "message": "留言刪除成功"
+        }
+    except mysql.connector.Error:
+        if db is not None:
+            db.rollback()
+
+        return {
+            "success": False,
+            "message": "留言刪除失敗"
+        }
     finally:
         if cursor is not None:
             cursor.close()
