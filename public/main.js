@@ -50,6 +50,41 @@ async function register(event) {
     }
 }
 
+async function login(event) {
+    event.preventDefault();
+
+    const form = event.currentTarget;
+    const account = document.querySelector('#username');
+    const password = document.querySelector('#password');
+    const message = document.querySelector('#message');
+
+    const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            account: account.value,
+            password: password.value
+        })
+    });
+
+    const result = await response.json();
+    message.textContent = result.message;
+
+    if (result.success) {
+        window.location.href = '/';
+    } else {
+        message.classList.add('error');
+    }
+}
+
 document
     .querySelector('#register-form')
-    .addEventListener('submit', register);
+    ?.addEventListener('submit', register);
+
+document
+    .querySelector('#login-form')
+    ?.addEventListener('submit', login);
+
+

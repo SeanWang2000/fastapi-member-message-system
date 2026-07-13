@@ -2,10 +2,11 @@ import os
 import mysql.connector
 
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.sessions import SessionMiddleware
 from pydantic import BaseModel
-from password_utils import hash_password
+from password_utils import hash_password, password_hash
 
 load_dotenv()
 
@@ -21,6 +22,10 @@ def get_db_connection():
 class RegisterData(BaseModel):
     account: str
     nickname: str
+    password: str
+
+class LoginData(BaseModel):
+    account: str
     password: str
 
 def validate_text(
@@ -39,6 +44,7 @@ def validate_text(
     return None
 
 app = FastAPI()
+app.add_middleware(SessionMiddleware, secret_key="dfkljlaoih")
 
 def account_is_available(account: str) -> bool:
     db = None
@@ -58,7 +64,6 @@ def account_is_available(account: str) -> bool:
         if db is not None:
             db.close()
 
-
 def nickname_is_available(nickname: str) -> bool:
     db = None
     cursor = None
@@ -76,6 +81,26 @@ def nickname_is_available(nickname: str) -> bool:
             cursor.close()
         if db is not None:
             db.close()
+
+def find_user_by_account(account: str):
+    con = get_db_connection()
+    cursor = con.cursor(dictionary=True)
+
+    try:
+        cursor.execute(
+            """
+            SELECT id, nick_name, account, password_hash
+            FROM users
+            WHERE account = %s
+            LIMIT 1
+            """,
+            (account,)
+        )
+
+        return cursor.fetchone()
+    finally:
+        cursor.close()
+        con.close()
 
 @app.get("/api/accounts/check")
 def check_account(account: str):
@@ -202,13 +227,29 @@ def register(body: RegisterData):
         if db is not None:
             db.close()
 
+@app.post("/api/login")
+def login(request: Request, data: LoginData):
+    user = find_user_by_account(data.account)
 
+    if user is None:
+        return {
+            "success": False,
+            "message": "帳號或密碼錯誤"
+        }
 
+    if not password_hash.verify(data.password, user["password_hash"]):
+        return {
+            "success": False,
+            "message": "帳號或密碼錯誤"
+        }
 
+    request.session["user_id"] = user["id"]
+    request.session["nickname"] = user["nick_name"]
 
-
-
-
+    return {
+        "success": True,
+        "message": "登入成功"
+    }
 
 @app.get("/api/message")
 def get_msg():
