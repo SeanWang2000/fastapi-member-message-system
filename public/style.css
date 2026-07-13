@@ -126,6 +126,15 @@ textarea:focus { outline: 2px solid #93c5fd; border-color: #2563eb; }
     display: grid;
     gap: 12px;
 }
+.board-status {
+    margin: 0;
+    padding: 28px 20px;
+    color: #6b7280;
+    text-align: center;
+    background: #fff;
+    border: 1px dashed #cbd5e1;
+    border-radius: 10px;
+}
 .message-item {
     padding: 16px 18px;
     background: #fff;

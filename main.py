@@ -44,7 +44,8 @@ def validate_text(
     return None
 
 app = FastAPI()
-app.add_middleware(SessionMiddleware, secret_key="dfkljlaoih")
+key = os.environ["SECRET_KEY"]
+app.add_middleware(SessionMiddleware, secret_key=key)
 
 def account_is_available(account: str) -> bool:
     db = None
@@ -274,7 +275,17 @@ def get_msg():
     try:
         db = get_db_connection()
         cursor = db.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM message")
+
+        cursor.execute("""
+            SELECT
+                u.nick_name,
+                m.content,
+                m.create_time
+            FROM message AS m
+            JOIN users AS u ON m.user_id = u.id
+            ORDER BY m.create_time DESC
+        """)
+
         return cursor.fetchall()
     finally:
         if cursor is not None:

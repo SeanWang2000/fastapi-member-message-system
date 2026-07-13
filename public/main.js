@@ -79,6 +79,86 @@ async function login(event) {
     }
 }
 
+function formatMessageTime(value) {
+    if (!value) {
+        return '';
+    }
+
+    const date = new Date(String(value).replace(' ', 'T'));
+
+    if (Number.isNaN(date.getTime())) {
+        return value;
+    }
+
+    return date.toLocaleString('zh-TW', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+async function loadMessages() {
+    const board = document.querySelector('#board');
+    const count = document.querySelector('.message-count');
+
+    if (!board) {
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/message');
+
+        if (!response.ok) {
+            throw new Error('Failed to load messages');
+        }
+
+        const messages = await response.json();
+
+        board.replaceChildren();
+        count.textContent = `${messages.length} 則留言`;
+
+        if (messages.length === 0) {
+            const emptyMessage = document.createElement('p');
+            emptyMessage.className = 'board-status';
+            emptyMessage.textContent = '目前還沒有留言';
+            board.appendChild(emptyMessage);
+            return;
+        }
+
+        messages.forEach((message) => {
+            const item = document.createElement('article');
+            item.className = 'message-item';
+
+            const meta = document.createElement('div');
+            meta.className = 'message-meta';
+
+            const author = document.createElement('span');
+            author.className = 'message-author';
+            author.textContent = message.nick_name;
+
+            const time = document.createElement('time');
+            time.dateTime = message.create_time;
+            time.textContent = formatMessageTime(message.create_time);
+
+            const content = document.createElement('p');
+            content.className = 'message-content';
+            content.textContent = message.content;
+
+            meta.append(author, time);
+            item.append(meta, content);
+            board.appendChild(item);
+        });
+    } catch (error) {
+        board.replaceChildren();
+        const errorMessage = document.createElement('p');
+        errorMessage.className = 'board-status error';
+        errorMessage.textContent = '留言載入失敗，請稍後再試。';
+        board.appendChild(errorMessage);
+    }
+}
+
 async function setupSessionButton() {
     const button = document.querySelector('#logout-button');
 
@@ -123,3 +203,4 @@ document
     ?.addEventListener('submit', login);
 
 setupSessionButton();
+loadMessages();
