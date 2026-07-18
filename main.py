@@ -1,13 +1,11 @@
 import os
-import mysql.connector
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
-from db import get_db_connection
-from routers.auth import router, nickname_is_available, account_is_available
-from schemas import MessageData
+from routers.auth import auth_router, nickname_is_available, account_is_available
+from routers.message import message_router
 from validators import validate_text
 
 load_dotenv()
@@ -15,7 +13,8 @@ load_dotenv()
 app = FastAPI()
 key = os.environ["SECRET_KEY"]
 app.add_middleware(SessionMiddleware, secret_key=key)
-app.include_router(router, prefix="/api")
+app.include_router(auth_router, prefix="/api")
+app.include_router(message_router, prefix="/api")
 
 
 @app.get("/api/accounts/check")
@@ -53,136 +52,5 @@ def check_nickname(nickname: str):
         "message": "暱稱可以使用" if available else "暱稱已被使用"
     }
 
-@app.get("/api/message")
-def get_msg(request: Request):
-    db = None
-    cursor = None
-    user_id = request.session.get("user_id")
-
-    try:
-        db = get_db_connection()
-        cursor = db.cursor(dictionary=True)
-
-        cursor.execute("""
-            SELECT
-                m.id,
-                u.nick_name,
-                m.content,
-                m.create_time,
-                (m.user_id = %s) AS can_delete
-            FROM message AS m
-            JOIN users AS u ON m.user_id = u.id
-            ORDER BY m.create_time DESC
-        """, (user_id,))
-        return cursor.fetchall()
-    finally:
-        if cursor is not None:
-            cursor.close()
-        if db is not None:
-            db.close()
-
-@app.delete("/api/message/{message_id}")
-def delete_msg(request: Request, message_id: int):
-    user_id = request.session.get("user_id")
-
-    if user_id is None:
-        return {
-            "success": False,
-            "message": "請先登入"
-        }
-
-    db = None
-    cursor = None
-
-    try:
-        db = get_db_connection()
-        cursor = db.cursor()
-        cursor.execute(
-            "DELETE FROM message WHERE id = %s AND user_id = %s",
-            (message_id, user_id)
-        )
-
-        if cursor.rowcount == 0:
-            return {
-                "success": False,
-                "message": "留言不存在或無權限刪除"
-            }
-
-        db.commit()
-        return {
-            "success": True,
-            "message": "留言刪除成功"
-        }
-    except mysql.connector.Error:
-        if db is not None:
-            db.rollback()
-
-        return {
-            "success": False,
-            "message": "留言刪除失敗"
-        }
-    finally:
-        if cursor is not None:
-            cursor.close()
-        if db is not None:
-            db.close()
-
-@app.post("/api/message")
-def post_msg(request: Request, body: MessageData):
-    user_id = request.session.get("user_id")
-
-    if user_id is None:
-        return {
-            "success": False,
-            "message": "請先登入"
-        }
-
-    content = body.content.strip()
-
-    if not content:
-        return {
-            "success": False,
-            "message": "留言內容不可為空白"
-        }
-
-    if len(content) > 500:
-        return {
-            "success": False,
-            "message": "留言內容不可超過 500 個字元"
-        }
-
-    db = None
-    cursor = None
-
-    try:
-        db = get_db_connection()
-        cursor = db.cursor()
-
-        cursor.execute("""
-            INSERT INTO message (user_id, content)
-            VALUES (%s, %s)
-        """, (user_id, content))
-
-        db.commit()
-
-        return {
-            "success": True,
-            "message": "留言發布成功"
-        }
-
-    except mysql.connector.Error:
-        if db is not None:
-            db.rollback()
-
-        return {
-            "success": False,
-            "message": "留言發布失敗"
-        }
-
-    finally:
-        if cursor is not None:
-            cursor.close()
-        if db is not None:
-            db.close()
 
 app.mount("/", StaticFiles(directory="public", html=True))

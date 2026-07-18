@@ -8,7 +8,7 @@ from schemas import LoginData, RegisterData
 from validators import validate_text
 
 
-router = APIRouter()
+auth_router = APIRouter()
 
 
 def account_is_available(account: str) -> bool:
@@ -69,7 +69,7 @@ def find_user_by_account(account: str):
         con.close()
 
 
-@router.get("/session")
+@auth_router.get("/session")
 def get_session(request: Request):
     return {
         "logged_in": "user_id" in request.session,
@@ -77,7 +77,7 @@ def get_session(request: Request):
     }
 
 
-@router.post("/logout")
+@auth_router.post("/logout")
 def logout(request: Request):
     request.session.clear()
     return {
@@ -86,7 +86,7 @@ def logout(request: Request):
     }
 
 
-@router.post("/register")
+@auth_router.post("/register")
 def register(body: RegisterData):
     account = body.account
     nickname = body.nickname
@@ -140,7 +140,7 @@ def register(body: RegisterData):
             db.close()
 
 
-@router.post("/login")
+@auth_router.post("/login")
 def login(request: Request, data: LoginData):
     user = find_user_by_account(data.account)
     invalid_credentials = {"success": False, "message": "帳號或密碼錯誤"}
