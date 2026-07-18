@@ -5,31 +5,11 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
-from pydantic import BaseModel
+from db import get_db_connection
 from password_utils import hash_password, password_hash
+from schemas import LoginData, MessageData, RegisterData
 
 load_dotenv()
-
-# 目前為學習與小型專案，採用每次操作建立並關閉連線的方式。
-def get_db_connection():
-    return mysql.connector.connect(
-        user=os.getenv("DB_USER"),
-        password=os.getenv("DB_PASSWORD"),
-        host=os.getenv("DB_HOST"),
-        database=os.getenv("DB_NAME")
-    )
-
-class RegisterData(BaseModel):
-    account: str
-    nickname: str
-    password: str
-
-class LoginData(BaseModel):
-    account: str
-    password: str
-
-class MessageData(BaseModel):
-    content: str
 
 def validate_text(
     value: str,
