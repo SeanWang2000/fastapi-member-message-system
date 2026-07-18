@@ -1,12 +1,10 @@
 import mysql.connector
-
 from fastapi import APIRouter, Request
 
 from db import get_db_connection
 from password_utils import hash_password, password_hash
 from schemas import LoginData, RegisterData
 from validators import validate_text
-
 
 auth_router = APIRouter()
 
@@ -67,6 +65,42 @@ def find_user_by_account(account: str):
     finally:
         cursor.close()
         con.close()
+
+
+@auth_router.get("/accounts/check")
+def check_account(account: str):
+    error = validate_text(account, "帳號", 6, 20)
+
+    if error is not None:
+        return {
+            "available": False,
+            "message": error
+        }
+
+    available = account_is_available(account)
+
+    return {
+        "available": available,
+        "message": "帳號可以使用" if available else "帳號已被使用"
+    }
+
+
+@auth_router.get("/nicknames/check")
+def check_nickname(nickname: str):
+    error = validate_text(nickname, "暱稱", 2, 15)
+
+    if error is not None:
+        return {
+            "available": False,
+            "message": error
+        }
+
+    available = nickname_is_available(nickname)
+
+    return {
+        "available": available,
+        "message": "暱稱可以使用" if available else "暱稱已被使用"
+    }
 
 
 @auth_router.get("/session")
