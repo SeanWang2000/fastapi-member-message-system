@@ -1,18 +1,16 @@
 import mysql.connector
-from fastapi import APIRouter, Request
-from db import get_db_connection
+from fastapi import APIRouter, Depends, Request
+from db import get_db
 from schemas import MessageData
 
 message_router = APIRouter()
 
 @message_router.get("/message")
-def get_msg(request: Request):
-    db = None
+def get_msg(request: Request, db=Depends(get_db)):
     cursor = None
     user_id = request.session.get("user_id")
 
     try:
-        db = get_db_connection()
         cursor = db.cursor(dictionary=True)
 
         cursor.execute("""
@@ -30,11 +28,9 @@ def get_msg(request: Request):
     finally:
         if cursor is not None:
             cursor.close()
-        if db is not None:
-            db.close()
 
 @message_router.post("/message")
-def post_msg(request: Request, body: MessageData):
+def post_msg(request: Request, body: MessageData, db=Depends(get_db)):
     user_id = request.session.get("user_id")
 
     if user_id is None:
@@ -57,11 +53,9 @@ def post_msg(request: Request, body: MessageData):
             "message": "留言內容不可超過 500 個字元"
         }
 
-    db = None
     cursor = None
 
     try:
-        db = get_db_connection()
         cursor = db.cursor()
 
         cursor.execute("""
@@ -77,8 +71,7 @@ def post_msg(request: Request, body: MessageData):
         }
 
     except mysql.connector.Error:
-        if db is not None:
-            db.rollback()
+        db.rollback()
 
         return {
             "success": False,
@@ -88,11 +81,9 @@ def post_msg(request: Request, body: MessageData):
     finally:
         if cursor is not None:
             cursor.close()
-        if db is not None:
-            db.close()
 
 @message_router.delete("/message/{message_id}")
-def delete_msg(request: Request, message_id: int):
+def delete_msg(request: Request, message_id: int, db=Depends(get_db)):
     user_id = request.session.get("user_id")
 
     if user_id is None:
@@ -101,11 +92,9 @@ def delete_msg(request: Request, message_id: int):
             "message": "請先登入"
         }
 
-    db = None
     cursor = None
 
     try:
-        db = get_db_connection()
         cursor = db.cursor()
         cursor.execute(
             "DELETE FROM message WHERE id = %s AND user_id = %s",
@@ -124,8 +113,7 @@ def delete_msg(request: Request, message_id: int):
             "message": "留言刪除成功"
         }
     except mysql.connector.Error:
-        if db is not None:
-            db.rollback()
+        db.rollback()
 
         return {
             "success": False,
@@ -134,6 +122,4 @@ def delete_msg(request: Request, message_id: int):
     finally:
         if cursor is not None:
             cursor.close()
-        if db is not None:
-            db.close()
 

@@ -1,17 +1,21 @@
 import mysql.connector
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
 
-from db import get_db_connection
+from db import get_db
 from password_utils import hash_password, password_hash
 from schemas import LoginData, RegisterData
 from validators import validate_text
-from repositories.user_repository import account_is_available, nickname_is_available, find_user_by_account
+from repositories.user_repository import (
+    account_is_available,
+    find_user_by_account,
+    nickname_is_available,
+)
 
 auth_router = APIRouter()
 
 
 @auth_router.get("/accounts/check")
-def check_account(account: str):
+def check_account(account: str, db=Depends(get_db)):
     error = validate_text(account, "帳號", 6, 20)
 
     if error is not None:
@@ -20,7 +24,7 @@ def check_account(account: str):
             "message": error
         }
 
-    available = account_is_available(account)
+    available = account_is_available(db, account)
 
     return {
         "available": available,
@@ -29,7 +33,7 @@ def check_account(account: str):
 
 
 @auth_router.get("/nicknames/check")
-def check_nickname(nickname: str):
+def check_nickname(nickname: str, db=Depends(get_db)):
     error = validate_text(nickname, "暱稱", 2, 15)
 
     if error is not None:
@@ -38,7 +42,7 @@ def check_nickname(nickname: str):
             "message": error
         }
 
-    available = nickname_is_available(nickname)
+    available = nickname_is_available(db, nickname)
 
     return {
         "available": available,
@@ -64,7 +68,7 @@ def logout(request: Request):
 
 
 @auth_router.post("/register")
-def register(body: RegisterData):
+def register(body: RegisterData, db=Depends(get_db)):
     account = body.account
     nickname = body.nickname
     password = body.password
@@ -81,16 +85,14 @@ def register(body: RegisterData):
     if password_error is not None:
         return {"success": False, "message": password_error}
 
-    if not account_is_available(account):
+    if not account_is_available(db, account):
         return {"success": False, "message": "帳號已被使用"}
 
-    if not nickname_is_available(nickname):
+    if not nickname_is_available(db, nickname):
         return {"success": False, "message": "暱稱已被使用"}
 
-    db = None
     cursor = None
     try:
-        db = get_db_connection()
         cursor = db.cursor()
         cursor.execute(
             """
@@ -102,24 +104,20 @@ def register(body: RegisterData):
         db.commit()
         return {"success": True, "message": "註冊成功"}
     except mysql.connector.IntegrityError:
-        if db is not None:
-            db.rollback()
+        db.rollback()
         return {"success": False, "message": "帳號或暱稱已被使用"}
     except mysql.connector.Error as error:
-        if db is not None:
-            db.rollback()
+        db.rollback()
         print(error)
         return {"success": False, "message": "資料庫操作失敗"}
     finally:
         if cursor is not None:
             cursor.close()
-        if db is not None:
-            db.close()
 
 
 @auth_router.post("/login")
-def login(request: Request, data: LoginData):
-    user = find_user_by_account(data.account)
+def login(request: Request, data: LoginData, db=Depends(get_db)):
+    user = find_user_by_account(db, data.account)
     invalid_credentials = {"success": False, "message": "帳號或密碼錯誤"}
 
     if user is None or not password_hash.verify(data.password, user["password_hash"]):
