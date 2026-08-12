@@ -5,9 +5,9 @@ def validate_text(
     max_length: int,
 ) -> str | None:
     if any(char.isspace() for char in value):
-        return f"{field_name}不可包含空白"
+        return f"{field_name} must not contain whitespace."
 
     if not min_length <= len(value) <= max_length:
-        return f"{field_name}長度必須為 {min_length}～{max_length} 個字元"
+        return f"{field_name} must be between {min_length} and {max_length} characters."
 
     return None

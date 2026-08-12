@@ -1,4 +1,13 @@
 
+const API_BASE = 'http://localhost:8000/api';
+
+function apiFetch(path, options = {}) {
+    return fetch(`${API_BASE}${path}`, {
+        ...options,
+        credentials: 'include'
+    });
+}
+
 async function register(event) {
     // 阻止表單重新載入頁面，改用 fetch 呼叫後端 API。
     event.preventDefault();
@@ -21,7 +30,7 @@ async function register(event) {
     button.disabled = true;
 
     try {
-        const response = await fetch('/api/register', {
+        const response = await apiFetch('/register', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -58,7 +67,7 @@ async function login(event) {
     const password = document.querySelector('#password');
     const message = document.querySelector('#message');
 
-    const response = await fetch('/api/login', {
+    const response = await apiFetch('/login', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -108,7 +117,7 @@ async function deleteMessage(messageId, item) {
     button.disabled = true;
 
     try {
-        const response = await fetch(`/api/message/${messageId}`, {
+        const response = await apiFetch(`/message/${messageId}`, {
             method: 'DELETE'
         });
         const result = await response.json();
@@ -133,7 +142,7 @@ async function loadMessages() {
     }
 
     try {
-        const response = await fetch('/api/message');
+        const response = await apiFetch('/message');
 
         if (!response.ok) {
             throw new Error('Failed to load messages');
@@ -212,7 +221,7 @@ async function publishMessage() {
     message.textContent = '';
 
     try {
-        const response = await fetch('/api/message', {
+        const response = await apiFetch('/message', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -247,7 +256,7 @@ async function setupSessionButton() {
     }
 
     try {
-        const response = await fetch('/api/session');
+        const response = await apiFetch('/session');
         const session = await response.json();
 
         button.textContent = session.logged_in ? '登出' : '登入';
@@ -258,7 +267,7 @@ async function setupSessionButton() {
                 return;
             }
 
-            const logoutResponse = await fetch('/api/logout', {
+            const logoutResponse = await apiFetch('/logout', {
                 method: 'POST'
             });
 
