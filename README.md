@@ -17,3 +17,24 @@ FastAPI 學習後的實作練習，用於整合會員註冊、登入驗證、Ses
 ### 留言板頁面
 
 ![留言板頁面](images/message-board.png)
+## 使用方式
+
+在第一個終端機啟動後端 API：
+
+```powershell
+cd backend
+uvicorn main:app --reload --port 8000
+```
+
+在第二個終端機啟動前端靜態伺服器：
+
+```powershell
+cd frontend
+python -m http.server 5173
+```
+
+接著在瀏覽器開啟：
+
+```text
+http://127.0.0.1:5173
+```
