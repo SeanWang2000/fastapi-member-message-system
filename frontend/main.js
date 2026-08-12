@@ -1,5 +1,5 @@
 
-const API_BASE = 'http://localhost:8000/api';
+const API_BASE = `http://${window.location.hostname}:8000/api`;
 
 function apiFetch(path, options = {}) {
     return fetch(`${API_BASE}${path}`, {
