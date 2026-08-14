@@ -118,10 +118,9 @@ def register(body: RegisterData, db=Depends(get_db)):
 @auth_router.post("/login")
 def login(request: Request, data: LoginData, db=Depends(get_db)):
     user = find_user_by_account(db, data.account)
-    invalid_credentials = {"success": False, "message": "帳號或密碼錯誤"}
 
     if user is None or not password_hash.verify(data.password, user["password_hash"]):
-        return invalid_credentials
+        return {"success": False, "message": "帳號或密碼錯誤"}
 
     request.session["user_id"] = user["id"]
     request.session["nickname"] = user["nick_name"]
