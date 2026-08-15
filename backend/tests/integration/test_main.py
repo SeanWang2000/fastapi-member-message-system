@@ -1,14 +1,21 @@
 import pytest
 from collections.abc import Iterator
+from unittest.mock import MagicMock
 from fastapi.testclient import TestClient
 
+from db import get_db
 from main import app
 
 
 @pytest.fixture
 def client() -> Iterator[TestClient]:
-    with TestClient(app) as test_client:
-        yield test_client
+    app.dependency_overrides[get_db] = lambda: MagicMock()
+
+    try:
+        with TestClient(app) as test_client:
+            yield test_client
+    finally:
+        app.dependency_overrides.clear()
 
 def test_get_session_when_not_logged_in(client: TestClient):
     response = client.get("/api/session")
