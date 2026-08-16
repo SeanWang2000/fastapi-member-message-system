@@ -38,3 +38,22 @@ python -m http.server 5173
 ```text
 http://127.0.0.1:5173
 ```
+
+## 使用 Docker Compose
+
+啟動 backend 與 frontend：
+
+```powershell
+docker compose up --build
+```
+
+啟動後：
+
+- Frontend：http://localhost:5173
+- Backend API：http://localhost:8000
+
+停止服務：
+
+```powershell
+docker compose down
+```
